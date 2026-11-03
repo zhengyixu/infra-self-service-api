@@ -1,0 +1,21 @@
+---
+- name: Configure app hosts
+  hosts: app
+  become: true
+  # Facts are gathered after the host is reachable (see pre_tasks).
+  gather_facts: false
+
+  pre_tasks:
+    # Fresh instances need time before SSH answers (Floci installs sshd at boot,
+    # real EC2 runs cloud-init). Retry instead of failing on the first attempt.
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for_connection:
+        timeout: 180
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - base
+    - users
+    - app

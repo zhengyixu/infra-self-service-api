@@ -1,0 +1,13 @@
+---
+# Both handlers listen to the same topic and run in the order defined here:
+# a broken config fails the validation step and never reaches the reload.
+- name: Validate nginx config
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  listen: Reload nginx
+
+- name: Reload nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+  listen: Reload nginx

@@ -47,3 +47,6 @@ hs_err_pid*
 # --- Local AI assistant instructions (not part of the project) ---
 CLAUDE.md
 CLAUDE_notes.md
+
+# --- Ansible collections installed by ansible-galaxy (declared in requirements.yml) ---
+ansible/collections/

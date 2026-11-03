@@ -1,0 +1,61 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Create web root
+  ansible.builtin.file:
+    path: "{{ app_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy status page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ app_root }}/index.html"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy nginx site config
+  ansible.builtin.template:
+    src: nginx-site.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable site
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ app_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+    state: link
+  notify: Reload nginx
+
+- name: Disable default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Ensure nginx is running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true # start again after a reboot
+
+# Handlers normally run at the end of the play; flush them now so the check
+# below tests the new configuration, not the old one.
+- name: Apply pending config changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify status page is served
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ app_port }}/"
+    return_content: true
+  register: app_status_page
+  failed_when: instance_id not in app_status_page.content

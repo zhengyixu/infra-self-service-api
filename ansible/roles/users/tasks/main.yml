@@ -1,0 +1,25 @@
+---
+# TODO(you): create an admin user that can SSH in with a key and use sudo.
+# Use the variables in ../defaults/main.yml. Four tasks:
+#
+# 1. Create the user with ansible.builtin.user
+#    - name, shell, create_home: true, state: present
+#
+# 2. Install the SSH public key with ansible.posix.authorized_key
+#    - user: the new user; key: read the LOCAL file (on the control node, not the host):
+#        "{{ lookup('ansible.builtin.file', users_public_key_file) }}"
+#    - Run `ansible-galaxy collection install -r requirements.yml` first.
+#
+# 3. Allow passwordless sudo with ansible.builtin.copy to /etc/sudoers.d/<user>
+#    - content: "<user> ALL=(ALL) NOPASSWD:ALL\n", mode "0440"
+#    - validate: "visudo -cf %s" -- checks the file BEFORE it is moved into place.
+#      A broken sudoers file can lock everyone out of sudo; this is the safety net.
+#
+# 4. (Optional) Lock the password: `password_lock: true` on the user task (key-only login).
+#
+# Check: ansible app -m ansible.builtin.command -a 'sudo -n -u deploy id' should work,
+# and `ssh -i ~/.ssh/infra-self-service-api deploy@<host> sudo -n true` should succeed.
+# Interview angle: why use sudoers.d/ with validate instead of editing /etc/sudoers?
+- name: Users role not implemented yet
+  ansible.builtin.debug:
+    msg: "TODO: implement roles/users/tasks/main.yml"

@@ -1,0 +1,15 @@
+<!doctype html>
+<!-- {{ ansible_managed }} -->
+<!-- No timestamps here: a changing value would make every run report "changed". -->
+<html lang="en">
+<head><meta charset="utf-8"><title>{{ inventory_hostname }}</title></head>
+<body>
+  <h1>{{ inventory_hostname }}</h1>
+  <dl>
+    <dt>Instance</dt><dd>{{ instance_id }}</dd>
+    <dt>Target</dt><dd>{{ target }}</dd>
+    <dt>OS</dt><dd>{{ ansible_distribution }} {{ ansible_distribution_version }}</dd>
+    <dt>Artifacts bucket</dt><dd>{{ artifacts_bucket }}</dd>
+  </dl>
+</body>
+</html>

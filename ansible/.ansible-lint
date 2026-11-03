@@ -1,0 +1,5 @@
+---
+# Strictest built-in rule set; suits a repo meant to show good practice.
+profile: production
+exclude_paths:
+  - collections/ # third-party code installed by ansible-galaxy

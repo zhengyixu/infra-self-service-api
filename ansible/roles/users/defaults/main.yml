@@ -1,0 +1,4 @@
+---
+users_name: deploy
+users_shell: /bin/bash
+users_public_key_file: ~/.ssh/infra-self-service-api.pub

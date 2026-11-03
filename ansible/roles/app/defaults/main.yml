@@ -1,0 +1,6 @@
+---
+app_name: infra-ssa-status
+app_root: "/var/www/{{ app_name }}"
+# 8080, not 80: on Floci the instance metadata proxy already listens on
+# 169.254.169.254:80 inside the instance, so nginx cannot bind 0.0.0.0:80.
+app_port: 8080

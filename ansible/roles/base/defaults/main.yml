@@ -1,0 +1,7 @@
+---
+base_packages:
+  - ca-certificates
+  - curl
+  - jq
+  - sudo
+  - unzip
