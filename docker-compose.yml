@@ -1,0 +1,17 @@
+# Local AWS emulator for development and CI.
+# Image/tag verified against https://github.com/floci-io/floci (pinned for reproducibility).
+services:
+  floci:
+    image: floci/floci:2.3.0
+    ports:
+      - "4566:4566"
+    environment:
+      # Hostname Floci embeds in returned URLs (e.g. SQS QueueUrl) for other compose services.
+      FLOCI_HOSTNAME: floci
+      # memory (default) = clean slate on each restart; switch to "persistent" if needed.
+      FLOCI_STORAGE_MODE: memory
+    volumes:
+      # EC2 instances are real Docker containers launched via the host daemon (needed in Phase 3).
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Required by Floci to access the Docker socket.
+    user: root
