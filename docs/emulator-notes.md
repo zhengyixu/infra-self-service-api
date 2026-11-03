@@ -1,0 +1,18 @@
+# Floci vs real AWS: observed differences
+
+Running log of behavior seen on the Floci emulator that must be handled in code
+or re-verified on real AWS. Feeds the README's "emulator vs real AWS" section.
+
+| Area | On Floci | Implication |
+|------|----------|-------------|
+| Identity | `sts get-caller-identity` returns account `000000000000`, ARN `...:root`, for any credentials | IAM auth/policies are not proven locally; verify least-privilege on real AWS |
+| AMIs | Synthetic IDs, e.g. `ami-ubuntu2204`, `ami-0abcdef1234567890` | Never hard-code AMI IDs; look them up via `data "aws_ami"` filters |
+| Default VPC | Pre-created as `vpc-default-us-east-1` (172.31.0.0/16) | Don't depend on default-VPC IDs or format; create our own VPC |
+| Persistence | `FLOCI_STORAGE_MODE=memory`: state is lost on container restart | Terraform state and emulator state can drift after a restart; re-apply from clean |
+| AMI lookup | `data "aws_ami"` with Canonical owner `099720109477` + jammy name filter resolves to `ami-ubuntu2204` (Docker `ubuntu:22.04`) | Same lookup works on both targets; no per-target AMI branch needed |
+| EC2 runtime | Instance = Docker container running `tail -f /dev/null`; no systemd, no cloud-init | Ansible tasks relying on systemd services need verification on real AWS (Phase 3) |
+| SSH | Key injected for **root**; sshd installed at boot (~10-15 s of `Connection reset`); container IP reachable on :22 from a Linux host, also published on `localhost:2200-2299` | Inventory: `root` on Floci vs `ubuntu` on AWS; add an SSH wait/retry. Container-IP routing may not work on Docker Desktop (macOS/Windows) |
+| Public IP | `PublicIpAddress` = private container IP (e.g. `10.20.1.10`) | IGW/route table/public-IP routing are not proven locally |
+| Security groups | Source CIDRs not enforced (unless `FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED=true`) | SSH CIDR restrictions must be verified on real AWS |
+| EBS encryption | `root_block_device.encrypted = true` is accepted but reported as `false` | Perpetual replacement diff; set `encrypted` only when `target = "aws"` |
+| Key pair tags | Tags passed at `ImportKeyPair` (incl. provider `default_tags`) are not stored | Perpetual tag diff; `ignore_changes = [tags, tags_all]` on the key pair |
