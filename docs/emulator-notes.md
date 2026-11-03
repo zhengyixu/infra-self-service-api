@@ -16,3 +16,6 @@ or re-verified on real AWS. Feeds the README's "emulator vs real AWS" section.
 | Security groups | Source CIDRs not enforced (unless `FLOCI_NETWORK_SECURITY_GROUP_ENFORCEMENT_ENABLED=true`) | SSH CIDR restrictions must be verified on real AWS |
 | EBS encryption | `root_block_device.encrypted = true` is accepted but reported as `false` | Perpetual replacement diff; set `encrypted` only when `target = "aws"` |
 | Key pair tags | Tags passed at `ImportKeyPair` (incl. provider `default_tags`) are not stored | Perpetual tag diff; `ignore_changes = [tags, tags_all]` on the key pair |
+| Port 80 in instances | Floci's IMDS proxy (`socat`) listens on `169.254.169.254:80` *inside* each instance, so apps cannot bind `0.0.0.0:80` | App serves on 8080. On real EC2, IMDS is answered by the hypervisor, so port 80 is free |
+| Service manager | PID 1 is `tail`; Ansible reports `ansible_service_mgr: tail`. `ansible.builtin.service` falls back to SysV `/etc/init.d` scripts, which work for apt packages like nginx | Same role works on both, but systemd-only features (unit files, timers, `systemd` module) can't be tested locally |
+| sudo | Not installed in the base image; SSH login is already root | Base role installs `sudo`. `become: true` works on Floci because Ansible skips escalation when already root |

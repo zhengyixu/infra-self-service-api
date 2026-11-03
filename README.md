@@ -10,7 +10,7 @@ AWS emulator and deployed to real AWS through GitHub Actions.
 
 - [x] **Local foundation**: Floci emulator via Docker Compose, AWS CLI smoke test
 - [x] **Terraform**: VPC, EC2, S3, DynamoDB; one code base switching between Floci and real AWS
-- [ ] **Ansible**: configure the provisioned instances (idempotent playbooks and roles)
+- [x] **Ansible**: configure the provisioned instances (idempotent playbooks and roles)
 - [ ] **Spring Boot API**: `POST/GET/DELETE /environments`, async provisioning jobs, status tracking
 - [ ] **Tests**: unit tests and integration tests against Floci
 - [ ] **CI**: build, tests, `terraform validate`, `ansible-lint` on GitHub Actions
@@ -38,6 +38,13 @@ cd terraform
 terraform init
 terraform workspace select -or-create floci
 terraform apply
+cd ..
+
+# 4. Configure the instances with Ansible (needs ansible-core; see ansible/requirements.yml)
+terraform -chdir=terraform output -json | python3 ansible/inventory/generate.py > ansible/inventory/generated.yml
+cd ansible
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook site.yml
 ```
 
 ## Repository layout
@@ -46,6 +53,7 @@ terraform apply
 docker-compose.yml   Floci emulator
 scripts/             Env setup and smoke test for the emulator
 terraform/           IaC; target = "floci" | "aws", one workspace per target
+ansible/             Playbook, roles (base, users, app), inventory generated from Terraform outputs
 docs/                Notes, including Floci vs real AWS differences
 ```
 
