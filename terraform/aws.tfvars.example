@@ -1,0 +1,7 @@
+# Copy to aws.tfvars (gitignored) for the real AWS deploy (Phase 7):
+#   terraform workspace select -or-create aws
+#   terraform apply -var-file=aws.tfvars
+target            = "aws"
+region            = "us-east-1"
+instance_type     = "t3.micro"
+ssh_ingress_cidrs = ["203.0.113.10/32"] # replace with your public IP /32
