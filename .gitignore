@@ -1,0 +1,49 @@
+# --- Secrets & credentials (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.aws/
+
+# --- Terraform ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.tfstate.lock.info
+*.tfplan
+
+# --- Ansible ---
+*.retry
+ansible/inventory/generated*
+.vault_pass*
+
+# --- Java / Maven ---
+target/
+*.class
+*.log
+hs_err_pid*
+
+# --- IDE / OS ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# --- Local emulator data ---
+.floci-data/
+
+# --- Local AI assistant instructions (not part of the project) ---
+CLAUDE.md
+CLAUDE_notes.md
