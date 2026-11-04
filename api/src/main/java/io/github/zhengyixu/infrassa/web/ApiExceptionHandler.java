@@ -1,6 +1,7 @@
 package io.github.zhengyixu.infrassa.web;
 
 import io.github.zhengyixu.infrassa.environment.DuplicateEnvironmentNameException;
+import io.github.zhengyixu.infrassa.environment.EnvironmentNotFoundException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
@@ -49,13 +50,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
-    // TODO(you): map EnvironmentNotFoundException to 404 Not Found.
-    //  - Same shape as handleDuplicateName above: an @ExceptionHandler method returning a
-    //    ProblemDetail with HttpStatus.NOT_FOUND, a title (e.g. "Environment not found") and the
-    //    exception message as detail. Optionally add the id as a property, like "name" above.
-    //  - Without it, GET /environments/{unknown-id} returns 500, because nothing handles it.
-    //  - Then remove @Disabled from EnvironmentControllerTest.getUnknownEnvironmentReturns404Problem.
-    //  - Alternative worth knowing for interviews: make the exception extend Spring's
-    //    ErrorResponseException; the base class of this handler then renders it with no
-    //    handler method at all. Trade-off: the domain exception then depends on Spring Web.
+    @ExceptionHandler
+    ProblemDetail handleEnvironmentNotFound(EnvironmentNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Environment not found");
+        problem.setProperty("id", ex.getId());
+        return problem;
+    }
 }

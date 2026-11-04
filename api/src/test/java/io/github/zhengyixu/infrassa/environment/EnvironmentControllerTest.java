@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import io.github.zhengyixu.infrassa.job.Job;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -107,7 +106,6 @@ class EnvironmentControllerTest {
     }
 
     @Test
-    @Disabled("TODO(you): enable after mapping EnvironmentNotFoundException in ApiExceptionHandler")
     void getUnknownEnvironmentReturns404Problem() {
         UUID id = UUID.randomUUID();
         when(service.get(id)).thenThrow(new EnvironmentNotFoundException(id));
