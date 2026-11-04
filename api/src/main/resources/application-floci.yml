@@ -1,0 +1,14 @@
+# Local development against docker-compose (PostgreSQL) and Floci.
+# Activate with: SPRING_PROFILES_ACTIVE=floci
+# These credentials only work against the local compose database.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:15432/infrassa
+    username: infrassa
+    password: infrassa_local
+
+logging:
+  structured:
+    format:
+      # Human-readable logs while developing; JSON everywhere else.
+      console: ""

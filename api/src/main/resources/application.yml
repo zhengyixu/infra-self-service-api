@@ -1,0 +1,44 @@
+# Base configuration for every environment. No credentials here: they come from the
+# environment (real AWS) or from a local-only profile (application-floci.yml).
+spring:
+  application:
+    name: infra-self-service-api
+  threads:
+    virtual:
+      # Request handling and @Async work run on Java 21+ virtual threads.
+      enabled: true
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    # Migrations in src/main/resources/db/migration are applied at startup.
+    locations: classpath:db/migration
+
+logging:
+  structured:
+    format:
+      # JSON logs (Elastic Common Schema): one object per line, ready for CloudWatch / ELK.
+      console: ecs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      # /actuator/health/liveness and /actuator/health/readiness for container orchestrators.
+      probes:
+        enabled: true
+  info:
+    build:
+      enabled: true
+
+springdoc:
+  # OpenAPI docs are part of this demo API, so they are enabled explicitly.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html

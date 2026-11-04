@@ -15,3 +15,14 @@ indent_size = 2
 switch_case_indent = true
 # shfmt -bn: binary operators like && and | may start a line
 binary_next_line = true
+
+[*.{java,xml}]
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.cmd]
+end_of_line = crlf
