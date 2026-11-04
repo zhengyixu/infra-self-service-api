@@ -23,6 +23,8 @@ override.tf.json
 *_override.tf.json
 .terraform.tfstate.lock.info
 *.tfplan
+# Backend config for real AWS names the state bucket (with the account ID); keep it local.
+aws.s3.tfbackend
 
 # --- Ansible ---
 *.retry
