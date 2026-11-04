@@ -18,12 +18,13 @@ AWS emulator and deployed to real AWS through GitHub Actions.
 
 ## Tech stack
 
-Java 21 · Spring Boot 3 · AWS SDK for Java v2 · Terraform · Ansible · Docker · GitHub Actions · Floci
+Java 25 · Spring Boot 4.1 · PostgreSQL · AWS SDK for Java v2 · Terraform · Ansible · Docker · GitHub Actions · Floci
 
 ## Quick start (local, no AWS account needed)
 
-Prerequisites: Docker, AWS CLI v2, Terraform >= 1.9, Linux host (see
-[emulator notes](docs/emulator-notes.md) for networking differences on Docker Desktop).
+Prerequisites: Docker, AWS CLI v2, Terraform >= 1.9, ansible-core, JDK 25 (Maven is not needed:
+the `./mvnw` wrapper downloads it), Linux host (see [emulator notes](docs/emulator-notes.md)
+for networking differences on Docker Desktop).
 
 ```bash
 # 1. Start the emulator and check the AWS CLI can reach it
@@ -45,16 +46,26 @@ terraform -chdir=terraform output -json | python3 ansible/inventory/generate.py 
 cd ansible
 ansible-galaxy collection install -r requirements.yml
 ansible-playbook site.yml
+cd ..
+
+# 5. Run the API (JDK 25; adjust JAVA_HOME to your install)
+export JAVA_HOME=~/.jdks/temurin-25
+cd api
+./mvnw verify                                   # build + tests (uses Testcontainers)
+SPRING_PROFILES_ACTIVE=floci ./mvnw spring-boot:run
+# http://localhost:8080/swagger-ui.html, http://localhost:8080/actuator/health
 ```
 
 ## Repository layout
 
 ```
-docker-compose.yml   Floci emulator
+docker-compose.yml   Floci emulator and PostgreSQL (host port 15432)
+api/                 Spring Boot 4.1 service (Java 25)
 scripts/             Env setup and smoke test for the emulator
 terraform/           IaC; target = "floci" | "aws", one workspace per target
 ansible/             Playbook, roles (base, users, app), inventory generated from Terraform outputs
 docs/                Notes, including Floci vs real AWS differences
+docs/adr/            Architecture decision records
 ```
 
 ## Emulator vs real AWS
