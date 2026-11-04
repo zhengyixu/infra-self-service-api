@@ -1,27 +1,33 @@
 package io.github.zhengyixu.infrassa.config;
 
+import io.swagger.v3.oas.models.ExternalDocumentation;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * OpenAPI metadata shown at /swagger-ui.html and /v3/api-docs.
- *
- * <p>TODO(you): replace springdoc's default title ("OpenAPI definition", version "v0") with real
- * metadata. Add one {@code @Bean} method returning {@code io.swagger.v3.oas.models.OpenAPI}:
- *
- * <ul>
- *   <li>{@code new OpenAPI().info(new Info().title(...).description(...).version(...))}
- *   <li>Version: inject {@code org.springframework.boot.info.BuildProperties} as a method
- *       parameter and use {@code buildProperties.getVersion()}, so the API version always matches
- *       the build (it comes from the pom via the build-info goal).
- *   <li>Optional: {@code .license(new License().name("MIT"))} and an external docs link to the
- *       GitHub repo.
- * </ul>
- *
- * <p>.NET analogy: {@code services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo {...}))}.
- * {@code @Configuration} + {@code @Bean} is how Spring registers an object in the DI container,
- * like {@code services.AddSingleton(...)}.
- *
- * <p>Check: {@code curl -s localhost:8080/v3/api-docs | jq .info} shows your title and version.
- */
 @Configuration
-class OpenApiConfig {}
+class OpenApiConfig {
+
+    private static final String REPO_URL = "https://github.com/zhengyixu/infra-self-service-api";
+    private final BuildProperties buildProperties;
+
+    public OpenApiConfig(BuildProperties buildProperties) {
+        this.buildProperties = buildProperties;
+    }
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Infra Self-Service API")
+                        .description("Request, track and tear down environments provisioned with Terraform and Ansible")
+                        .version(buildProperties.getVersion())
+                        .license(new License().name("MIT").url(REPO_URL + "/blob/main/LICENSE")))
+                .externalDocs(new ExternalDocumentation()
+                        .description("Source and design decisions")
+                        .url(REPO_URL));
+    }
+}
