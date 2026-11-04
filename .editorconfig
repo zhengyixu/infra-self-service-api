@@ -1,5 +1,5 @@
 # Shared editor settings: https://editorconfig.org
-# shfmt reads the [*.sh] section directly, so editor, CLI and CI agree on one style.
+# shfmt reads the shell section directly, so editor, CLI and CI agree on one style.
 root = true
 
 [*]
@@ -9,6 +9,16 @@ charset = utf-8
 trim_trailing_whitespace = true
 
 [*.sh]
+indent_style = space
+indent_size = 2
+# shfmt -ci: indent case branches inside switch statements
+switch_case_indent = true
+# shfmt -bn: binary operators like && and | may start a line
+binary_next_line = true
+
+# Git hooks are shell scripts without an extension.
+# (Separate section: shfmt does not support {a,b} patterns.)
+[.githooks/*]
 indent_style = space
 indent_size = 2
 # shfmt -ci: indent case branches inside switch statements

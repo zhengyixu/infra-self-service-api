@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Rejects a commit when staged Java code is not formatted the way Spotless expects,
+# so the CI build does not fail on formatting.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+# Skip in an emergency:   git commit --no-verify
+#
+# It checks rather than fixes on purpose: git commits what is already staged, so
+# reformatting here would leave the commit unformatted and the fix unstaged.
+set -euo pipefail
+
+# Only run when the commit touches the API's Java sources or its build file.
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -qE '^api/(.+\.java|pom\.xml)$'; then
+  exit 0
+fi
+
+# Spotless itself runs on any recent JDK; fall back to the project's JDK if none is set.
+if [[ -z ${JAVA_HOME:-} && -d $HOME/.jdks/temurin-25 ]]; then
+  export JAVA_HOME=$HOME/.jdks/temurin-25
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+if ! (cd "$repo_root/api" && ./mvnw -q spotless:check >/dev/null 2>&1); then
+  echo "pre-commit: Java formatting check failed." >&2
+  echo "Fix it with:  (cd api && ./mvnw spotless:apply)  then 'git add' the files again." >&2
+  exit 1
+fi

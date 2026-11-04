@@ -56,6 +56,9 @@ SPRING_PROFILES_ACTIVE=floci ./mvnw spring-boot:run
 # http://localhost:8080/swagger-ui.html, http://localhost:8080/actuator/health
 ```
 
+Contributing: enable the pre-commit formatting check once per clone with
+`git config core.hooksPath .githooks`. Fix formatting with `cd api && ./mvnw spotless:apply`.
+
 ## Repository layout
 
 ```
@@ -66,6 +69,7 @@ terraform/           IaC; target = "floci" | "aws", one workspace per target
 ansible/             Playbook, roles (base, users, app), inventory generated from Terraform outputs
 docs/                Notes, including Floci vs real AWS differences
 docs/adr/            Architecture decision records
+.githooks/           Git hooks (pre-commit formatting check)
 ```
 
 ## Emulator vs real AWS
