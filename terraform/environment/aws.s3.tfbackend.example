@@ -1,0 +1,7 @@
+# Copy to aws.s3.tfbackend (gitignored) for target = "aws". The key is per environment
+# and passed separately: -backend-config=key=environments/<environment-id>/terraform.tfstate
+# Bucket name: `scripts/tf.sh bootstrap aws output -raw state_bucket`.
+bucket       = "infra-ssa-tfstate-123456789012-us-east-1"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true

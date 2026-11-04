@@ -1,0 +1,8 @@
+# Copy to aws.s3.tfbackend (gitignored) for target = "aws".
+# Bucket name: `scripts/tf.sh bootstrap aws output -raw state_bucket`.
+# Credentials come from the standard AWS chain (SSO, env vars, GitHub OIDC in CI).
+bucket       = "infra-ssa-tfstate-123456789012-us-east-1"
+key          = "platform/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true

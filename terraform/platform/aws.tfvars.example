@@ -1,0 +1,2 @@
+# Copy to aws.tfvars (gitignored); scripts/tf.sh passes it for target = "aws".
+region = "us-east-1"

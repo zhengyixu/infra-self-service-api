@@ -1,0 +1,16 @@
+# Backend for target = "floci". Used by scripts/tf.sh; no secrets (Floci's dummy credentials).
+bucket       = "infra-ssa-tfstate-000000000000-us-east-1"
+key          = "platform/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
+
+endpoints = {
+  s3 = "http://localhost:4566"
+}
+use_path_style              = true
+access_key                  = "test"
+secret_key                  = "test"
+skip_credentials_validation = true
+skip_requesting_account_id  = true
+skip_metadata_api_check     = true

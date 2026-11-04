@@ -1,7 +1,6 @@
 variable "target" {
   description = "Where to deploy: \"floci\" (local emulator) or \"aws\" (real AWS)."
   type        = string
-  default     = "floci"
 
   validation {
     condition     = contains(["floci", "aws"], var.target)
@@ -27,33 +26,36 @@ variable "project_name" {
   default     = "infra-ssa"
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC."
+variable "environment_id" {
+  description = "Environment UUID from the API (tag and state key)."
   type        = string
-  default     = "10.20.0.0/16"
+
+  validation {
+    condition     = can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.environment_id))
+    error_message = "environment_id must be a lowercase UUID."
+  }
 }
 
-variable "public_subnet_cidr" {
-  description = "CIDR block for the public subnet."
+variable "job_id" {
+  description = "UUID of the API job running this plan/apply (tag only; finds orphans after a crash)."
   type        = string
-  default     = "10.20.1.0/24"
+}
+
+variable "name" {
+  description = "Environment name from the API request."
+  type        = string
 }
 
 variable "instance_type" {
-  description = "EC2 instance type. Smallest sensible default to keep real-AWS cost minimal."
+  description = "EC2 instance type."
   type        = string
   default     = "t3.micro"
 }
 
 variable "instance_count" {
-  description = "Number of EC2 instances to create."
+  description = "Number of instances."
   type        = number
   default     = 1
-
-  validation {
-    condition     = var.instance_count >= 0 && var.instance_count <= 3
-    error_message = "instance_count must be between 0 and 3."
-  }
 }
 
 variable "ssh_public_key_path" {
