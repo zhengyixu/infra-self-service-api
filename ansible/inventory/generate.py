@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate an Ansible inventory from Terraform outputs.
 
-Usage (from the repo root):
-    terraform -chdir=terraform output -json | python3 ansible/inventory/generate.py \
-        > ansible/inventory/generated.yml
+Usage (from the repo root), for one environment:
+    ENVIRONMENT_ID=<uuid> scripts/tf.sh environment floci output -json \
+        | python3 ansible/inventory/generate.py > ansible/inventory/generated.yml
 
 Terraform is the source of truth for which hosts exist. Target-specific
 connection details (login user, host key policy) are decided here, so the
@@ -36,7 +36,8 @@ def main() -> None:
         f"    ansible_ssh_private_key_file: {SSH_KEY}",
         f'    ansible_ssh_common_args: "{ssh_args}"',
         f"    artifacts_bucket: {tf['artifacts_bucket']}",
-        f"    environments_table: {tf['environments_table']}",
+        f"    environment_id: {tf['environment_id']}",
+        f"    environment_name: {tf['environment_name']}",
         "  children:",
         "    app:",
         "      hosts:" + ("" if tf["instances"] else " {}"),
