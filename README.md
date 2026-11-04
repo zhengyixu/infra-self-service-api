@@ -9,7 +9,7 @@ AWS emulator and deployed to real AWS through GitHub Actions.
 ## Status
 
 - [x] **Local foundation**: Floci emulator via Docker Compose, AWS CLI smoke test
-- [x] **Terraform**: VPC, EC2, S3, DynamoDB; one code base switching between Floci and real AWS
+- [x] **Terraform**: bootstrap, platform and per-environment layers with S3 state and lock files; one code base for Floci and real AWS
 - [x] **Ansible**: configure the provisioned instances (idempotent playbooks and roles)
 - [ ] **Spring Boot API**: `POST/GET/DELETE /environments`, async provisioning jobs, status tracking
 - [ ] **Tests**: unit tests and integration tests against Floci
@@ -22,7 +22,7 @@ Java 25 · Spring Boot 4.1 · PostgreSQL · AWS SDK for Java v2 · Terraform · 
 
 ## Quick start (local, no AWS account needed)
 
-Prerequisites: Docker, AWS CLI v2, Terraform >= 1.9, ansible-core, JDK 25 (Maven is not needed:
+Prerequisites: Docker, AWS CLI v2, Terraform >= 1.10, ansible-core, JDK 25 (Maven is not needed:
 the `./mvnw` wrapper downloads it), Linux host (see [emulator notes](docs/emulator-notes.md)
 for networking differences on Docker Desktop).
 
@@ -34,15 +34,15 @@ docker compose up -d
 # 2. One-time: SSH key for the emulated EC2 instances (stays outside the repo)
 ssh-keygen -t ed25519 -N '' -f ~/.ssh/infra-self-service-api
 
-# 3. Provision VPC, EC2, S3 and DynamoDB on the emulator
-cd terraform
-terraform init
-terraform workspace select -or-create floci
-terraform apply
-cd ..
+# 3. Terraform, layer by layer (scripts/tf.sh picks the backend for the target)
+scripts/tf.sh bootstrap floci apply             # state bucket (once per target)
+scripts/tf.sh platform floci apply              # shared VPC, subnet, bucket, DynamoDB, SSM
+# One environment by hand (normally the API does this for each request):
+export ENVIRONMENT_ID=$(uuidgen | tr A-F a-f)
+scripts/tf.sh environment floci apply -var name=demo -var job_id=$(uuidgen | tr A-F a-f)
 
-# 4. Configure the instances with Ansible (needs ansible-core; see ansible/requirements.yml)
-terraform -chdir=terraform output -json | python3 ansible/inventory/generate.py > ansible/inventory/generated.yml
+# 4. Configure that environment's instances with Ansible (see ansible/requirements.yml)
+scripts/tf.sh environment floci output -json | python3 ansible/inventory/generate.py > ansible/inventory/generated.yml
 cd ansible
 ansible-galaxy collection install -r requirements.yml
 ansible-playbook site.yml
@@ -64,8 +64,12 @@ Contributing: enable the pre-commit formatting check once per clone with
 ```
 docker-compose.yml   Floci emulator and PostgreSQL (host port 15432)
 api/                 Spring Boot 4.1 service (Java 25)
-scripts/             Env setup and smoke test for the emulator
-terraform/           IaC; target = "floci" | "aws", one workspace per target
+scripts/             Emulator env and smoke test; tf.sh runs Terraform per layer and target
+terraform/
+  bootstrap/         State bucket (local state, applied once per target)
+  platform/          Shared VPC, subnet, artifacts bucket, DynamoDB; publishes IDs to SSM
+  environment/       Root run once per environment, one state each (driven by the API)
+  modules/           environment (SG, key pair, instances) and s3-bucket
 ansible/             Playbook, roles (base, users, app), inventory generated from Terraform outputs
 docs/                Notes, including Floci vs real AWS differences
 docs/adr/            Architecture decision records

@@ -18,19 +18,43 @@ Three layers, each with its own state:
 |---|---|---|---|
 | `terraform/bootstrap/` | S3 bucket for Terraform state (versioned, encrypted, public access blocked) | Local, applied once per target | A human, once |
 | `terraform/platform/` | Shared VPC, subnet, artifacts bucket, DynamoDB table, RDS (real AWS) | S3 backend | **CI only** |
-| `terraform/modules/environment/` | Per-request stack: security group, key pair, instances | S3 backend, one key per environment (`environments/<id>/terraform.tfstate`) | **The API only** |
+| `terraform/environment/` (root) + `terraform/modules/environment/` | Per-request stack: security group, key pair, instances | S3 backend, one key per environment (`environments/<id>/terraform.tfstate`) | **The API only** |
 
-- The API generates a small root module per environment that calls `modules/environment` and
-  reads the platform values it needs (VPC, subnet). It never plans or applies `platform/`.
+- One committed root, `terraform/environment/`, serves every environment (see the amendment
+  below). It calls `modules/environment` and reads the platform values it needs (VPC, subnet).
+  The API never plans or applies `platform/`.
 - Environments must not read the platform *state* (`terraform_remote_state`): that would give the
   API read access to everything in it, including secrets. The platform publishes only the values
-  environments need (e.g. SSM parameters), or environments look them up with `data` sources.
-  The exact mechanism is decided when `platform/` is implemented. RDS uses
+  environments need as SSM `String` parameters under `/<project>/<target>/platform/`
+  (`vpc-id`, `subnet-id`, `artifacts-bucket`), and the API's role can read that path only. RDS uses
   `manage_master_user_password = true`, so its password lives in Secrets Manager, not in state.
 - Locking uses the S3 backend's native lock file (`use_lockfile = true`, Terraform >= 1.10),
   so no DynamoDB lock table is needed.
 - Every environment resource is tagged with `EnvironmentId` and `JobId` (see ADR 0001,
   orphaned resources).
+
+- Backend settings cannot use variables, so each layer has a `<target>.s3.tfbackend` file
+  (`aws.s3.tfbackend` stays local). `scripts/tf.sh <layer> <target>` always pairs the backend
+  with the same `target` and keeps each target's backend in its own data directory
+  (`.terraform/<target>`). Every root also checks that `target` matches the account the provider
+  is connected to (Floci reports `000000000000`).
+
+## Amendment (2026-11-04): one shared environment root instead of generated roots
+
+The original decision had the API generate a small root module per environment. Implemented
+instead: a single committed root, `terraform/environment/`, run once per environment with
+`-backend-config=key=environments/<id>/terraform.tfstate` and its own data directory
+(`TF_DATA_DIR=.terraform/<target>-<id>`), so concurrent jobs never share initialized backend
+state. Reasons:
+
+- The code the API runs is the code CI checks (`fmt`, `validate`, lint); generated code is only
+  checked once it exists.
+- No code generation or template engine in the API.
+- The concurrency problem that ruled out workspaces (one shared `.terraform/environment` file)
+  does not apply: every environment has its own data directory.
+
+Trade-off: changing `terraform/environment/` changes every environment on its next job.
+That is the intended behavior for a platform, but it means reviewing that root like an API change.
 
 ## Consequences
 
