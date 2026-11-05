@@ -11,7 +11,7 @@ AWS emulator and deployed to real AWS through GitHub Actions.
 - [x] **Local foundation**: Floci emulator via Docker Compose, AWS CLI smoke test
 - [x] **Terraform**: bootstrap, platform and per-environment layers with S3 state and lock files; one code base for Floci and real AWS
 - [x] **Ansible**: configure the provisioned instances (idempotent playbooks and roles)
-- [ ] **Spring Boot API**: `POST/GET/DELETE /environments`, async provisioning jobs, status tracking
+- [ ] **Spring Boot API**: `POST/GET /environments` and the job engine (claims with `SKIP LOCKED`, leases with fencing tokens, crash recovery by phase) running Terraform and Ansible; `DELETE` next
 - [ ] **Tests**: unit tests and integration tests against Floci
 - [ ] **CI**: build, tests, `terraform validate`, `ansible-lint` on GitHub Actions
 - [ ] **Real AWS deploy**: GitHub OIDC (no stored keys), smallest instance types, then `terraform destroy`
@@ -54,6 +54,11 @@ cd api
 ./mvnw verify                                   # build + tests (uses Testcontainers)
 SPRING_PROFILES_ACTIVE=floci ./mvnw spring-boot:run
 # http://localhost:8080/swagger-ui.html, http://localhost:8080/actuator/health
+
+# 6. Request an environment: the job engine plans, applies and configures it in the background
+curl -i -X POST localhost:8080/environments -H 'Content-Type: application/json' -d '{"name":"demo-api"}'
+curl localhost:8080/environments/<id>          # PROVISIONING -> READY; currentJob shows the phase
+# Per-job plan, inventory and step logs: /tmp/infra-ssa/jobs/<jobId>/attempt-<n>/ (infrassa.runner.work-dir)
 ```
 
 Contributing: enable the pre-commit formatting check once per clone with

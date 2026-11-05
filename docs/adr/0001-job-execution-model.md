@@ -132,6 +132,46 @@ First implementation: `InProcessTerraformAnsibleRunner`.
   Not automated in this phase.
 - The API host needs `terraform`, `ansible-playbook` and the SSH key, which matters for packaging.
 
+## Implementation notes (2026-11-04)
+
+Built as proposed: lease 60 s, heartbeat 20 s, sweep at startup and every 60 s, at most 3
+PLANNING attempts (`infrassa.jobs.*`). Code: `job/JobRepository` (fenced SQL),
+`provisioning/` (engine, transitions, sweep, runner contract), `provisioning/inprocess/`.
+
+- **Ownership rule.** A worker owns a job while `lease_version` matches its claim. Only a claim
+  and the recovery sweep increment it, so the sweep fences off a worker that was merely paused.
+  Worker updates do not check expiry: a late heartbeat that lands before the sweep's update wins
+  (PostgreSQL re-checks the sweep's `WHERE` on the locked row), and the sweep changes nothing.
+- **All times come from PostgreSQL's `now()`**, so instances with skewed clocks agree on expiry.
+- **A stopped job records nothing.** Lease lost or shutdown: the runner's thread is interrupted,
+  the child process gets SIGTERM (SIGKILL after 30 s, descendants included), and the sweep
+  classifies the job by phase. One place decides about unfinished work.
+- **Runner contract, first version:** `run(request, progress)` returns `Succeeded` or
+  `Failed(reason)`; `progress.enterPhase()` is fenced. The external reference and the
+  "delegated" outcome are left for the first runner that needs them (`SqsDispatchRunner`).
+- **The in-process runner calls `scripts/tf.sh`**, the same entry point a person uses, with
+  per-attempt files under `<work-dir>/jobs/<jobId>/attempt-<n>/` and a shared provider cache
+  (`TF_PLUGIN_CACHE_DIR`). `apply` takes the saved plan, so it applies exactly what was planned.
+- **The environment status changes only when a job ends for good.** An `INTERRUPTED` job leaves
+  the environment in `PROVISIONING` / `DESTROYING`.
+
+Verified on Floci: a two-instance environment went PENDING → PLANNING → APPLYING → CONFIGURING
+→ SUCCEEDED (about a minute), with 8 audit events. Killing the API with SIGKILL during APPLYING
+and restarting it: the first sweep marked the job `INTERRUPTED` (phase `APPLYING`); nothing was
+retried.
+
+Not done yet:
+- **`terraform force-unlock` when a job is interrupted.** Needed when the Terraform process
+  itself dies holding the S3 lock file; until then a resume would fail on the stale lock.
+- **Hard kill leaves an orphan.** SIGKILL to the JVM gives it no chance to signal children: in the
+  test above, the running `terraform apply` finished on its own and wrote state. Terraform's state
+  lock still prevents a second concurrent apply. In a container this does not arise (stopping the
+  container kills every process in it); on a plain host, a process supervisor with a cgroup per
+  service (systemd `KillMode=control-group`) does the same.
+- **The provider cache is not safe for concurrent `terraform init`.** Two first-time inits at the
+  same moment can race on the cache. For the container image: a read-only provider mirror
+  (`terraform providers mirror` + `provider_installation` in the CLI config) instead.
+
 ## Alternatives considered
 
 - **Status in memory, work on `@Async` threads only:** simplest, but every restart loses jobs and
