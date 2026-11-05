@@ -42,3 +42,19 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
+
+# Job engine and runner (docs/adr/0001-job-execution-model.md). Defaults live in
+# JobEngineProperties / InProcessRunnerProperties; the important ones are repeated here.
+infrassa:
+  jobs:
+    # false: API only, no background workers (tests set this).
+    enabled: true
+    lease-duration: 60s
+    heartbeat-interval: 20s
+    max-concurrent-jobs: 2
+  runner:
+    # Repository checkout with scripts/, terraform/ and ansible/. ".." works when the API is
+    # started from api/ (./mvnw spring-boot:run); a container image sets an absolute path.
+    repo-root: ..
+    # Plans, inventories and per-step logs: <work-dir>/jobs/<jobId>/attempt-<n>/
+    work-dir: ${java.io.tmpdir}/infra-ssa

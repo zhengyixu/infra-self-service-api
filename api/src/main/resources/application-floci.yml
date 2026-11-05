@@ -12,3 +12,7 @@ logging:
     format:
       # Human-readable logs while developing; JSON everywhere else.
       console: ""
+
+infrassa:
+  runner:
+    target: floci

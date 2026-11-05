@@ -9,6 +9,8 @@
 #   scripts/tf.sh bootstrap floci apply
 #   scripts/tf.sh platform floci plan
 #   scripts/tf.sh platform floci output -raw vpc_id
+#   ENVIRONMENT_ID=<uuid> scripts/tf.sh environment floci plan -out=/abs/path/env.tfplan -var ...
+#   ENVIRONMENT_ID=<uuid> scripts/tf.sh environment floci apply /abs/path/env.tfplan
 #
 # Why a wrapper: a backend block cannot use variables, so the target's backend comes
 # from <target>.s3.tfbackend at init time. Mixing them up is dangerous (target=aws
@@ -19,7 +21,7 @@
 set -euo pipefail
 
 usage() {
-  sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 2
 }
 
@@ -68,6 +70,16 @@ var_args=(-var "target=$target")
 
 command=$1
 shift
+
+# `apply <saved plan file>`: the plan already contains every variable, and Terraform
+# rejects -var/-var-file next to it.
+if [[ $command == apply ]]; then
+  for arg in "$@"; do
+    if [[ $arg != -* && -f $arg ]]; then
+      var_args=()
+    fi
+  done
+fi
 
 # First use of this layer/target: initialize its backend automatically.
 # Provider versions stay pinned by the committed .terraform.lock.hcl.
