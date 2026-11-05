@@ -2,13 +2,10 @@ package io.github.zhengyixu.infrassa.environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.github.zhengyixu.infrassa.TestcontainersConfiguration;
+import io.github.zhengyixu.infrassa.IntegrationTest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -19,9 +16,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
  * Full stack against PostgreSQL in a container: Flyway schema, real SQL, real transactions and
  * the unique index that rejects duplicate names.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@IntegrationTest
 class EnvironmentApiIntegrationTest {
 
     @Autowired
