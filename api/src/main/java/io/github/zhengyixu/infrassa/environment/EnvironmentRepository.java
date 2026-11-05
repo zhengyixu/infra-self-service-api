@@ -50,6 +50,15 @@ public class EnvironmentRepository {
                 .optional();
     }
 
+    /** Sets the status. Called by the job engine in the same transaction as the job update. */
+    public boolean updateStatus(UUID id, EnvironmentStatus status) {
+        return jdbc.sql("UPDATE environments SET status = :status, updated_at = now() WHERE id = :id")
+                        .param("status", status.name())
+                        .param("id", id)
+                        .update()
+                == 1;
+    }
+
     private static Environment map(ResultSet rs, int rowNum) throws SQLException {
         return new Environment(
                 rs.getObject("id", UUID.class),
