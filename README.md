@@ -2,19 +2,34 @@
 
 A self-service API that provisions and configures infrastructure on request, using
 Terraform and Ansible. It's developed locally against the [Floci](https://github.com/floci-io/floci)
-AWS emulator and deployed to real AWS through GitHub Actions.
+AWS emulator; the same code will be deployed to real AWS through GitHub Actions.
 
-> **Work in progress.** Built in phases; see status below.
+> **Work in progress.** Built in phases; see the roadmap below.
 
-## Status
+## Roadmap
 
+### Done
 - [x] **Local foundation**: Floci emulator via Docker Compose, AWS CLI smoke test
 - [x] **Terraform**: bootstrap, platform and per-environment layers with S3 state and lock files; one code base for Floci and real AWS
 - [x] **Ansible**: configure the provisioned instances (idempotent playbooks and roles)
-- [ ] **Spring Boot API**: `POST/GET /environments` and the job engine (claims with `SKIP LOCKED`, leases with fencing tokens, crash recovery by phase) running Terraform and Ansible; `DELETE` next
-- [ ] **Tests**: unit tests and integration tests against Floci
-- [ ] **CI**: build, tests, `terraform validate`, `ansible-lint` on GitHub Actions
-- [ ] **Real AWS deploy**: GitHub OIDC (no stored keys), smallest instance types, then `terraform destroy`
+- [x] **API: request and status**: `POST /environments` (202 + job), `GET /environments/{id}`, RFC 9457 problem details, OpenAPI docs
+- [x] **Job engine**: claims with `SKIP LOCKED`, leases with heartbeats and fencing tokens, recovery sweep, Terraform and Ansible run per job ([ADR 0001](docs/adr/0001-job-execution-model.md))
+
+### Next
+- [ ] **Recovery policy**: auto-retry jobs whose lease expired while planning; interrupt the rest
+- [ ] **`DELETE /environments/{id}`**: destroy job, `409` while another job is active
+- [ ] **Resume / retry** for interrupted and failed jobs
+- [ ] **Audit outbox publisher**: `audit_events` to DynamoDB ([ADR 0003](docs/adr/0003-postgresql-source-of-truth-and-audit-outbox.md))
+- [ ] **Tests**: integration tests against Floci end to end
+- [ ] **CI**: build, tests, `terraform fmt/validate`, `ansible-lint` on GitHub Actions
+- [ ] **Real AWS deploy**: GitHub OIDC (no stored keys), smallest instance types, billing alarm, then `terraform destroy`
+- [ ] **README**: architecture diagram, design decisions, emulator vs real AWS
+
+### Known gaps
+- Interrupted jobs don't release a stale Terraform S3 lock yet (`force-unlock`)
+- A hard-killed API host can leave an orphaned `terraform` process; run it in a container
+- The shared provider cache isn't safe for concurrent first-time `terraform init`; a read-only provider mirror is planned for the container image
+- S3 bucket hardening (versioning, encryption, public access block) before the first real AWS deploy
 
 ## Tech stack
 
