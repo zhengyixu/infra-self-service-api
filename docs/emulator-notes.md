@@ -22,3 +22,24 @@ or re-verified on real AWS. Feeds the README's "emulator vs real AWS" section.
 | S3 conditional writes | `PutObject` with `If-None-Match: *` on an existing key returns `412 PreconditionFailed`. Terraform's `use_lockfile` works: a second run fails with "Error acquiring the state lock" while the first holds `<key>.tflock`, and the lock object is removed afterwards | Same mechanism as real S3 (supported since Nov 2024); re-check lock behavior on real AWS in Phase 7 |
 | VPC networks | Each VPC becomes a Docker network with the VPC's CIDR, created when the first instance launches. `DeleteVpc` leaves the Docker network behind (Floci's own container stays attached to it) | Overlapping VPC CIDRs, legal on AWS, would collide on Docker. After destroying a VPC: `docker network disconnect <net> <floci-container> && docker network rm <net>` (seen with floci 2.3.0) |
 | SSM Parameter Store | `String` parameters work (put/get/delete, Terraform resource and data source) | Platform-to-environment handoff testable locally; IAM scoping of `/project/target/platform/*` only provable on AWS |
+
+## Why Floci and not AWS Emulator
+
+AWS published its own emulator, [AWS Emulator](https://github.com/aws/aws-emulator)
+(CC0, Rust), in November 2026. It was evaluated on 2026-11-11 against release v1.0.322, by
+reading its source and its tracked issues, not by running it:
+
+| Question | AWS Emulator | Floci |
+|----------|--------------|-------|
+| Do EC2 instances run? | No. `RunInstances` stores a record that moves from `pending` to `running` on a timer; the guest boot is simulated. No container, no sshd, nothing to connect to | Yes. Each instance is a Docker container with sshd and a reachable IP |
+| Can Ansible configure an instance? | No, so the CONFIGURING phase and the end-to-end job cannot run | Yes, the full PLANNING → APPLYING → CONFIGURING → READY job runs locally |
+| IAM enforcement | None: its own issue tracker records that no IAM authorization is evaluated | None |
+| EC2 networking APIs this project's Terraform calls | Recently stubs (`CreateSubnet`, `AttachInternetGateway`, `DescribeKeyPairs`, `RevokeSecurityGroupEgress`); the current source no longer marks them as stubs, but releases are daily and the list moves fast | Work (see the table above) |
+| Breadth | Very wide: hundreds of services, with fidelity scores published per release | Narrower, covers what this project uses |
+| Endpoint | HTTPS on `:9297` with a self-signed certificate that Terraform and the SDK must trust | HTTP on `:4566` |
+| Other | Usage telemetry on by default (`--telemetry off`); does not take pull requests | Open source (MIT) |
+
+Decision: Floci stays the emulator for development and CI, because only it can run the
+Ansible half of the job. AWS Emulator may be useful later as a second check for API-only
+services that Floci covers less well, such as the DynamoDB audit publisher or the Track F
+services (CloudTrail, Config, KMS). Neither emulator proves IAM, so IAM is verified on real AWS.
