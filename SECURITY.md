@@ -44,8 +44,6 @@ grant no access to any real system:
 - `api/src/main/resources/application-floci.yml`
 - `docker-compose.yml`
 
-Real AWS access is planned through GitHub OIDC, without stored keys.
-
 ## Known limitation: no authentication
 
 The API has no authentication or authorization yet. Anyone who can reach it can request

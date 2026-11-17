@@ -111,7 +111,7 @@ Needs no AWS account. Start here.
 
 **Build**
 - A budget and a billing alarm, created before any other resource.
-- GitHub OIDC federation to AWS. Two roles: one that can only plan, used on pull requests,
+- Two AWS roles for the pipeline: one that can only plan, used on pull requests,
   and one that can apply, used on `main`. Neither is broader than the platform layer needs.
   The plan role is read-only except for one thing: `plan` takes the state lock, which with
   `use_lockfile` means writing `<key>.tflock` in the state bucket. Grant `PutObject` and

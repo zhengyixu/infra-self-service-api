@@ -38,7 +38,7 @@ AWS emulator; the same code will be deployed to real AWS through GitHub Actions.
 - [ ] **Audit outbox publisher**: `audit_events` to DynamoDB ([ADR 0003](docs/adr/0003-postgresql-source-of-truth-and-audit-outbox.md))
 - [ ] **Tests**: integration tests against Floci end to end
 - [ ] **CI**: build, tests, `terraform fmt/validate`, `ansible-lint` on GitHub Actions
-- [ ] **Real AWS deploy**: GitHub OIDC (no stored keys), smallest instance types, billing alarm, then `terraform destroy`
+- [ ] **Real AWS deploy**: smallest instance types, billing alarm, then `terraform destroy`
 - [ ] **README**: architecture diagram, design decisions, emulator vs real AWS
 
 ### Known gaps

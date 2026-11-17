@@ -9,7 +9,7 @@ provider "aws" {
   region = var.region
 
   # Floci accepts any non-empty credentials. On real AWS these are null, so the
-  # provider uses the standard credential chain (env vars, SSO, or GitHub OIDC in CI).
+  # provider uses the standard credential chain (env vars or SSO).
   access_key = local.is_floci ? "test" : null
   secret_key = local.is_floci ? "test" : null
 
