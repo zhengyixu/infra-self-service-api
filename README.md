@@ -31,6 +31,26 @@ AWS emulator; the same code will be deployed to real AWS through GitHub Actions.
 - The shared provider cache isn't safe for concurrent first-time `terraform init`; a read-only provider mirror is planned for the container image
 - S3 bucket hardening (versioning, encryption, public access block) before the first real AWS deploy
 
+## Security
+
+Supply-chain and repository controls are added in phases. To report a vulnerability, see
+[SECURITY.md](SECURITY.md).
+
+| Phase | Controls | Status |
+| --- | --- | --- |
+| 0 | GitHub settings: Dependabot alerts and security updates, private vulnerability reporting, secret scanning with push protection, `main` protected from deletion and force-push | Done |
+| 1 | Dependabot version updates (Maven, Terraform, Docker Compose), `SECURITY.md`, `CODEOWNERS` | Done |
+| 2 | First CI workflow: build and test on JDK 25; CodeQL for Java; dependency review on PRs; Trivy/Checkov scan of Terraform; SHA-pinned actions with a least-privilege token; SARIF results in code scanning | Planned |
+| 3 | Custom Semgrep rules, with tests, aimed at this codebase: no `Runtime.exec` or `sh -c`; no string-formatted SQL in `jdbc.sql()`; request DTO strings must carry `@Pattern` or `@Size` | Planned |
+
+### Known issues
+
+- **No authentication**: anyone who can reach the API can `POST /environments` and provision EC2 instances (`EnvironmentController.java`; no Spring Security). Run it only on a trusted network; authentication comes in a later phase.
+- **Tool output in API responses**: a failed job's `last_error` holds the tail of the Terraform or Ansible log, and API clients can read it (`InProcessTerraformAnsibleRunner.java`, `failed()`). Planned: return a generic message and keep the detail in server logs.
+- **S3 buckets not hardened**: no public access block, default encryption or versioning yet (TODO in `terraform/modules/s3-bucket/main.tf`). Planned: finish the TODO before the first real AWS deploy.
+- **EBS encryption is conditional**: root volumes are encrypted only when `manage_ebs_encryption` is true; when it is false (Floci) the setting is left unmanaged (`terraform/modules/environment/main.tf`). Planned: default to encrypted so a missing or wrong flag cannot leave volumes unencrypted.
+- **Open egress and public IPs**: instances allow all outbound traffic to `0.0.0.0/0` (`terraform/modules/environment/main.tf`) and the subnet assigns public IPs on launch (`terraform/platform/network.tf`). Accepted for a lab environment and documented here.
+
 ## Tech stack
 
 Java 25 · Spring Boot 4.1 · PostgreSQL · AWS SDK for Java v2 · Terraform · Ansible · Docker · GitHub Actions · Floci
