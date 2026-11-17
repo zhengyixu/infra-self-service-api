@@ -6,6 +6,22 @@ AWS emulator; the same code will be deployed to real AWS through GitHub Actions.
 
 > **Work in progress.** Built in phases; see the roadmap below.
 
+## At a glance
+
+- **What it does:** `POST /environments` starts a job that provisions an EC2 environment with
+  Terraform and configures it with Ansible; `GET /environments/{id}` reports its status.
+- **Job engine:** PostgreSQL is the source of truth. Workers claim jobs with `SKIP LOCKED` and hold
+  leases with heartbeats and fencing tokens, and a recovery sweep handles crashed workers
+  ([ADR 0001](docs/adr/0001-job-execution-model.md)).
+- **Infrastructure as code:** layered Terraform roots (bootstrap, platform, environment) with S3
+  state, one code base for the emulator and real AWS ([ADR 0002](docs/adr/0002-terraform-layout-and-state.md)).
+- **Safe process execution:** Terraform and Ansible run as argument lists, never through a shell,
+  and request input is validated before it reaches them.
+- **Security in phases:** see [Security](#security) for what is in place, what is planned, and the
+  known issues.
+- **Try it:** [Quick start](#quick-start-local-no-aws-account-needed) runs everything locally; no
+  AWS account needed.
+
 ## Roadmap
 
 ### Done
