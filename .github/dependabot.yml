@@ -1,0 +1,42 @@
+# Dependabot version updates. Security updates are enabled separately in the
+# repository settings. A github-actions entry comes with the first workflow.
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      maven-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Terraform roots with a committed .terraform.lock.hcl. modules/ has no lock
+  # file; its provider constraints are resolved through these roots.
+  - package-ecosystem: "terraform"
+    directories:
+      - "/terraform/bootstrap"
+      - "/terraform/platform"
+      - "/terraform/environment"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      terraform-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Image tags in docker-compose.yml (Floci emulator and PostgreSQL).
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 2
+    groups:
+      compose-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
